@@ -3,9 +3,16 @@ const path = require('path')
 const express = require('express')
 const app = express()
 const public = path.join(__dirname, 'public');
-const {accounts, users, writeJSON} = require('./data')
+const { accounts, users, writeJSON } = require('./data')
+const accountRoutes = require('./routes/accounts.js')
+const servicesRoutes = require('./routes/services.js')
+
 app.use(express.static(public))
-app.use(express.urlencoded({extended: true}))
+app.use(express.urlencoded({ extended: true }))
+
+app.use('/account', accountRoutes)
+app.use('/services', servicesRoutes)
+
 app.set('views', path.join(__dirname, 'views'))
 app.set('view engine', 'ejs')
 
@@ -14,40 +21,6 @@ app.get('/', (req, res) => {
   res.render('index', { title: 'Account Summary', accounts })
 })
 
-app.get('/checking', (req, res) => {
-  res.render('account', { account: accounts.checking })
-})
-
-app.get('/savings', (req, res) => {
-  res.render('account', { account: accounts.savings })
-})
-
-app.get('/credit', (req, res) => {
-  res.render('account', { account: accounts.credit })
-})
-
-app.get('/transfer', (req, res) => {
-  res.render('transfer', { account: accounts.transfer })
-})
-app.post('/transfer', (req, res) => {
-  const accounts = writeJSON(accountData)
-  accounts[req.body.from].balance = accounts[req.body.from].balance - req.body.amount
-  accounts[req.body.to].balance = accounts[req.body.to].balance + parseInt(req.body.amount, 10)
-  
-  res.render('transfer', { message: 'Transfer Completed' })
-})
-
-app.get('/payment', (req, res) => {
-  return res.render('payment', { account: accounts.credit })
-})
-app.post('/payment', (req, res) => {
-  const accounts = writeJSON(accountData)
-  accounts.credit.balance -= req.body.amount
-  accounts.credit.available += parseInt(req.body.amount, 10)
-  const accountsJSON = JSON.stringify(accounts, null, 4)
-  fs.writeFileSync(path.join(__dirname, 'json', 'accounts.json'), accountsJSON, 'utf8')
-  res.render('payment', { message: 'Payment Successful', account: accounts.credit})
-})
 
 app.get('/profile', (req, res) => {
   res.render('profile', { user: users[0] })
